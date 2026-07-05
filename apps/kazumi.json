@@ -1,0 +1,17 @@
+{
+  "caskName": "kazumi",
+  "repo": {
+    "owner": "Predidit",
+    "name": "Kazumi"
+  },
+  "description": "基于自定义规则的番剧采集与在线观看程序",
+  "homepage": "https://github.com/Predidit/Kazumi",
+  "defaultAppName": "Kazumi",
+  "defaultBundleId": "com.example.kazumi",
+  "archSupport": "single",
+  "dmgPatterns": {
+    "single": "macos"
+  },
+  "hasAlpha": false,
+  "minMacOS": "catalina"
+}

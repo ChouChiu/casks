@@ -1,0 +1,18 @@
+{
+  "caskName": "micyou",
+  "repo": {
+    "owner": "LanRhyme",
+    "name": "MicYou"
+  },
+  "description": "Turn your Android device into a high-quality microphone for your PC / 将你的 Android 设备变成 PC 的高品质麦克风",
+  "homepage": "https://github.com/LanRhyme/MicYou",
+  "defaultAppName": "MicYou",
+  "defaultBundleId": "com.lanrhyme.micyou",
+  "archSupport": "dual",
+  "dmgPatterns": {
+    "arm64": "macos.+arm64\\.dmg$",
+    "x64": "macos.+x64\\.dmg$"
+  },
+  "hasAlpha": true,
+  "minMacOS": "catalina"
+}
