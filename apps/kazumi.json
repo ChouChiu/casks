@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "caskName": "kazumi",
   "repo": {
     "owner": "Predidit",
@@ -12,6 +13,6 @@
   "dmgPatterns": {
     "single": "macos"
   },
-  "hasAlpha": false,
+  "hasPreRelease": false,
   "minMacOS": "catalina"
 }

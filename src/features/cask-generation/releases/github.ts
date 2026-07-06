@@ -1,12 +1,26 @@
-import { compare } from "semver";
+import { coerce, compare, valid } from "semver";
 import type { AppConfig } from "../../../shared/config";
-import { parseSemver } from "../../../shared/version";
 import type { DMGAsset, GitHubRelease, MacOSRelease } from "./types";
 
 function extractSemver(tag: string): string {
 	const cleaned = tag.startsWith("v") ? tag.slice(1) : tag;
-	const parsed = parseSemver(cleaned);
-	return parsed ?? cleaned;
+	if (valid(cleaned)) return cleaned;
+	if (/^\d+\.\d+\.\d+/.test(cleaned)) return cleaned;
+
+	const parsed = coerce(cleaned);
+	return parsed?.version ?? cleaned;
+}
+
+function compareReleases(a: MacOSRelease, b: MacOSRelease): number {
+	const aVersion = valid(a.semver) ?? coerce(a.semver)?.version;
+	const bVersion = valid(b.semver) ?? coerce(b.semver)?.version;
+
+	if (aVersion && bVersion) {
+		const versionCompare = compare(bVersion, aVersion);
+		if (versionCompare !== 0) return versionCompare;
+	}
+
+	return b.published_at.localeCompare(a.published_at);
 }
 
 function extractDMGAsset(asset: GitHubRelease["assets"][0]): DMGAsset | null {
@@ -139,7 +153,7 @@ export async function fetchAllReleases(
 
 	console.log(`  Total macOS releases found: ${allReleases.length}`);
 
-	allReleases.sort((a, b) => compare(b.semver, a.semver));
+	allReleases.sort(compareReleases);
 
 	return allReleases;
 }

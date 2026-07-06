@@ -5,5 +5,5 @@ export interface CaskContext {
 	release: MacOSRelease;
 	metadata: AppMetadata;
 	isLatest: boolean;
-	channel?: "stable" | "alpha";
+	channel?: "stable" | "preRelease";
 }

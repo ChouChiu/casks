@@ -1,4 +1,4 @@
-cask "micyou@alpha" do
+cask "micyou@pre-release" do
   version :latest
   sha256 :no_check
 

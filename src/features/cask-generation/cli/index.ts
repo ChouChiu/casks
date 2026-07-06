@@ -67,20 +67,20 @@ async function resolveMetadata(
 
 function splitChannels(releases: MacOSRelease[]): {
 	stable: MacOSRelease[];
-	alpha: MacOSRelease[];
+	preRelease: MacOSRelease[];
 } {
 	const stable: MacOSRelease[] = [];
-	const alpha: MacOSRelease[] = [];
+	const preRelease: MacOSRelease[] = [];
 
 	for (const r of releases) {
 		if (r.prerelease) {
-			alpha.push(r);
+			preRelease.push(r);
 		} else {
 			stable.push(r);
 		}
 	}
 
-	return { stable, alpha };
+	return { stable, preRelease };
 }
 
 async function processApp(
@@ -93,7 +93,7 @@ async function processApp(
 	console.log(`Processing: ${config.caskName}`);
 	console.log(`Repo: ${config.repo.owner}/${config.repo.name}`);
 	console.log(`Arch: ${config.archSupport}`);
-	console.log(`Alpha channel: ${config.hasAlpha}`);
+	console.log(`Pre-release channel: ${config.hasPreRelease}`);
 	console.log(`${"=".repeat(60)}\n`);
 
 	console.log("Fetching releases from GitHub API...");
@@ -101,23 +101,23 @@ async function processApp(
 	console.log(`Fetched ${releases.length} macOS releases.\n`);
 
 	let allReleases: MacOSRelease[];
-	let alpha: MacOSRelease[] = [];
+	let preRelease: MacOSRelease[] = [];
 
-	if (config.hasAlpha) {
+	if (config.hasPreRelease) {
 		const split = splitChannels(releases);
 		allReleases = split.stable;
-		alpha = split.alpha;
+		preRelease = split.preRelease;
 		console.log(`Stable releases: ${allReleases.length}`);
-		console.log(`Pre-releases: ${alpha.length}\n`);
+		console.log(`Pre-releases: ${preRelease.length}\n`);
 	} else {
 		allReleases = releases.filter((r) => !r.prerelease);
 		console.log(`Releases: ${allReleases.length}\n`);
 	}
 
 	const latestStable = allReleases[0];
-	const latestAlpha = alpha[0];
+	const latestPreRelease = preRelease[0];
 
-	if (!latestStable && !latestAlpha) {
+	if (!latestStable && !latestPreRelease) {
 		console.log("No macOS releases found. Nothing to do.");
 		return;
 	}
@@ -144,10 +144,10 @@ async function processApp(
 		}
 	}
 
-	// Write versioned casks for alpha releases
-	for (const release of alpha) {
+	// Write versioned casks for pre-release releases
+	for (const release of preRelease) {
 		const wasWritten = writeCask(
-			{ release, metadata, isLatest: false, channel: "alpha" },
+			{ release, metadata, isLatest: false, channel: "preRelease" },
 			config,
 			mode,
 		);
@@ -171,21 +171,28 @@ async function processApp(
 		console.log(`  Wrote ${config.caskName}.rb (latest stable)`);
 	}
 
-	// Always rewrite latest alpha cask
-	if (config.hasAlpha && latestAlpha) {
+	// Always rewrite latest pre-release cask
+	if (config.hasPreRelease && latestPreRelease) {
 		writeCask(
-			{ release: latestAlpha, metadata, isLatest: true, channel: "alpha" },
+			{
+				release: latestPreRelease,
+				metadata,
+				isLatest: true,
+				channel: "preRelease",
+			},
 			config,
 			"full",
 		);
 		written++;
-		console.log(`  Wrote ${config.caskName}@alpha.rb (latest pre-release)`);
+		console.log(
+			`  Wrote ${config.caskName}@pre-release.rb (latest pre-release)`,
+		);
 	}
 
 	console.log();
 	console.log(
 		`Done. Written: ${written}, Skipped: ${skipped}, ` +
-			`Stable: ${allReleases.length}, Pre-release: ${alpha.length}`,
+			`Stable: ${allReleases.length}, Pre-release: ${preRelease.length}`,
 	);
 }
 

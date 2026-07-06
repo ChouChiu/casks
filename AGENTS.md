@@ -39,7 +39,7 @@ Casks/*.rb        -> generated output, committed to repo
 
 - Versioned: `Casks/<name>@<semver>.rb` — pinned to a specific release with sha256
 - Latest: `Casks/<name>.rb` — `version :latest, sha256 :no_check`
-- Alpha: `Casks/<name>@alpha.rb` — latest pre-release (if `hasAlpha: true`)
+- Pre-release: `Casks/<name>@pre-release.rb` — latest pre-release (if `hasPreRelease: true`)
 - Dual-arch apps (MicYou) use `on_arm` / `on_intel` blocks; single-arch uses one URL
 
 ## DMG inspection

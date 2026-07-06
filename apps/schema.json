@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ChouChiu/casks/blob/main/apps/schema.json",
+  "title": "App 配置 Schema",
+  "description": "apps/*.json 的校验规则，用于生成 Homebrew Cask 文件",
+  "type": "object",
+  "required": [
+    "caskName",
+    "repo",
+    "description",
+    "homepage",
+    "defaultAppName",
+    "defaultBundleId",
+    "archSupport",
+    "dmgPatterns",
+    "hasPreRelease",
+    "minMacOS"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "引用的 JSON Schema 路径，供编辑器提供补全与校验"
+    },
+    "caskName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Cask 文件名前缀，仅限小写字母、数字与连字符，必须以字母开头。如 'micyou' → 'micyou.rb'"
+    },
+    "repo": {
+      "type": "object",
+      "description": "GitHub 仓库信息",
+      "required": ["owner", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$",
+          "description": "仓库所有者（用户名或组织名）"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._-]+$",
+          "description": "仓库名称"
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "应用描述，会写入 cask 的 desc 字段"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "description": "应用主页 URL"
+    },
+    "defaultAppName": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9 ._-]*$",
+      "description": "备用的 .app 名称（DMG 挂载检查失败时使用），通常与 .app 目录名一致"
+    },
+    "defaultBundleId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9.-]*\\.[a-zA-Z][a-zA-Z0-9.-]*$",
+      "description": "备用的 Bundle ID（DMG 挂载检查失败时使用），采用反向域名格式，如 'com.example.myapp'"
+    },
+    "archSupport": {
+      "type": "string",
+      "enum": ["single", "dual"],
+      "description": "架构支持模式：'single' = 每个版本一个通用 DMG；'dual' = 每个版本提供 arm64 和 x64 两个 DMG"
+    },
+    "dmgPatterns": {
+      "type": "object",
+      "description": "匹配 GitHub Releases 中 DMG 文件名的正则表达式",
+      "additionalProperties": false,
+      "properties": {
+        "single": {
+          "type": "string",
+          "minLength": 1,
+          "description": "单架构 DMG 文件名正则（archSupport 为 'single' 时必需）"
+        },
+        "arm64": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Apple Silicon (arm64) DMG 文件名正则（archSupport 为 'dual' 时必需）"
+        },
+        "x64": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Intel (x64) DMG 文件名正则（archSupport 为 'dual' 时必需）"
+        }
+      }
+    },
+    "hasPreRelease": {
+      "type": "boolean",
+      "description": "仓库是否发布 pre-release 版本。为 true 时会额外生成 @pre-release.rb cask"
+    },
+    "minMacOS": {
+      "type": "string",
+      "enum": [
+        "yosemite",
+        "el_capitan",
+        "sierra",
+        "high_sierra",
+        "mojave",
+        "catalina",
+        "big_sur",
+        "monterey",
+        "ventura",
+        "sonoma",
+        "sequoia",
+        "tahoe",
+        "golden_gate"
+      ],
+      "description": "最低 macOS 版本要求，使用 Homebrew 内部代号（全小写，空格以下划线替代）。catalina 之前的版本（yosemite ~ mojave）在 Homebrew 中已弃用"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "archSupport": { "const": "single" } }
+      },
+      "then": {
+        "properties": {
+          "dmgPatterns": {
+            "required": ["single"],
+            "properties": {
+              "arm64": { "not": {} },
+              "x64": { "not": {} }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "archSupport": { "const": "dual" } }
+      },
+      "then": {
+        "properties": {
+          "dmgPatterns": {
+            "required": ["arm64", "x64"],
+            "properties": {
+              "single": { "not": {} }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

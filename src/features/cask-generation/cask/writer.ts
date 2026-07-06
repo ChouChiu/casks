@@ -26,8 +26,8 @@ export function writeCask(
 	let filename: string;
 	if (isLatest) {
 		filename =
-			channel === "alpha"
-				? `${config.caskName}@alpha.rb`
+			channel === "preRelease"
+				? `${config.caskName}@pre-release.rb`
 				: `${config.caskName}.rb`;
 	} else {
 		filename = `${config.caskName}@${semver}.rb`;
@@ -54,8 +54,8 @@ export function getMetadataFromExistingCask(config: AppConfig): {
 
 	const caskName = config.caskName;
 
-	// Try the latest cask first, then alpha, then any versioned cask
-	const tryFiles = [`${caskName}.rb`, `${caskName}@alpha.rb`];
+	// Try the latest cask first, then pre-release, then any versioned cask
+	const tryFiles = [`${caskName}.rb`, `${caskName}@pre-release.rb`];
 
 	// Add all versioned cask files
 	const allFiles = readdirSync(dir);
@@ -64,7 +64,7 @@ export function getMetadataFromExistingCask(config: AppConfig): {
 			(f) =>
 				f.startsWith(`${caskName}@`) &&
 				f.endsWith(".rb") &&
-				!f.includes("@alpha"),
+				!f.includes("@pre-release"),
 		)
 		.sort()
 		.reverse();

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AppConfig } from "../../../shared/config";
@@ -11,9 +11,8 @@ async function downloadDmg(url: string, dest: string): Promise<void> {
 	if (!res.ok) {
 		throw new Error(`Download failed: ${res.status} ${res.statusText}`);
 	}
-	const buf = await res.bytes();
-	await Bun.write(dest, buf);
-	console.log(`  Downloaded ${(buf.length / 1024 / 1024).toFixed(1)} MB`);
+	const bytesWritten = await Bun.write(dest, res);
+	console.log(`  Downloaded ${(bytesWritten / 1024 / 1024).toFixed(1)} MB`);
 }
 
 function mountDmg(dmgPath: string, mountPoint: string): void {
@@ -35,21 +34,41 @@ function mountDmg(dmgPath: string, mountPoint: string): void {
 
 function unmountDmg(mountPoint: string): void {
 	console.log(`  Unmounting...`);
-	spawnSync("hdiutil", ["detach", mountPoint], { encoding: "utf-8" });
+	const result = spawnSync("hdiutil", ["detach", mountPoint], {
+		encoding: "utf-8",
+	});
+	if (result.status === 0) return;
+
+	const forceResult = spawnSync("hdiutil", ["detach", "-force", mountPoint], {
+		encoding: "utf-8",
+	});
+	if (forceResult.status !== 0) {
+		console.warn(
+			`  hdiutil detach failed: ${forceResult.stderr || result.stderr}`,
+		);
+	}
 }
 
 function findApp(mountPoint: string): string {
-	const result = spawnSync(
-		"find",
-		[mountPoint, "-name", "*.app", "-maxdepth", "2", "-type", "d"],
-		{ encoding: "utf-8" },
-	);
-	const lines = result.stdout.split("\n").filter(Boolean);
-	const appPath = lines[0];
-	if (!appPath) {
-		throw new Error(`No .app bundle found in ${mountPoint}`);
+	const queue: Array<{ path: string; depth: number }> = [
+		{ path: mountPoint, depth: 0 },
+	];
+
+	for (const item of queue) {
+		if (item.depth > 2) continue;
+
+		for (const entry of readdirSync(item.path, { withFileTypes: true })) {
+			if (!entry.isDirectory()) continue;
+
+			const entryPath = join(item.path, entry.name);
+			if (entry.name.endsWith(".app")) {
+				return entryPath;
+			}
+			queue.push({ path: entryPath, depth: item.depth + 1 });
+		}
 	}
-	return appPath;
+
+	throw new Error(`No .app bundle found in ${mountPoint}`);
 }
 
 function readPlistValue(plistPath: string, key: string): string {
@@ -73,6 +92,7 @@ export async function inspectDMG(
 	const mountPoint = join(tmpDir, "mnt");
 
 	try {
+		mkdirSync(tmpDir, { recursive: true });
 		await downloadDmg(downloadUrl, dmgPath);
 		mountDmg(dmgPath, mountPoint);
 

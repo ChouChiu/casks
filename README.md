@@ -37,7 +37,7 @@ brew install --cask kazumi
   "defaultBundleId": "com.example.myapp",
   "archSupport": "single",
   "dmgPatterns": { "single": "macos" },
-  "hasAlpha": false,
+  "hasPreRelease": false,
   "minMacOS": "catalina"
 }
 ```
@@ -74,7 +74,7 @@ bun run generate --inspect-dmg
 | `defaultBundleId` | 备用的 Bundle ID（DMG 检查失败时使用） |
 | `archSupport` | `"single"`（每个版本一个 DMG）或 `"dual"`（arm64 + x64 两个 DMG） |
 | `dmgPatterns` | 用于匹配 DMG 文件的正则表达式。`"single"` 时：`{ "single": "正则" }`，`"dual"` 时：`{ "arm64": "正则", "x64": "正则" }` |
-| `hasAlpha` | 仓库是否有 pre-release（alpha）版本 |
+| `hasPreRelease` | 仓库是否有 pre-release 版本 |
 | `minMacOS` | 最低 macOS 版本要求 |
 
 ## 自动更新

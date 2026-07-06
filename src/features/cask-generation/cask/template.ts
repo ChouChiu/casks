@@ -1,6 +1,32 @@
 import type { AppConfig } from "../../../shared/config";
 import type { CaskContext } from "./types";
 
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function interpolateVersion(value: string, semver: string): string {
+	return value.replace(new RegExp(escapeRegExp(semver), "g"), "#{version}");
+}
+
+function buildGitHubDownloadURL(
+	ctx: CaskContext,
+	config: AppConfig,
+	filename: string,
+	isLatest: boolean,
+): string {
+	const { release } = ctx;
+	const { owner, name } = config.repo;
+	const tagName = isLatest
+		? release.tag_name
+		: interpolateVersion(release.tag_name, release.semver);
+	const assetName = isLatest
+		? filename
+		: interpolateVersion(filename, release.semver);
+
+	return `https://github.com/${owner}/${name}/releases/download/${tagName}/${assetName}`;
+}
+
 function buildSingleArchURL(
 	ctx: CaskContext,
 	config: AppConfig,
@@ -10,24 +36,19 @@ function buildSingleArchURL(
 	const { owner, name } = config.repo;
 
 	if (isLatest) {
-		return `  url "https://github.com/${owner}/${name}/releases/download/${release.tag_name}/${release.dmg_filename}",\n      verified: "github.com/${owner}/${name}/"`;
+		return `  url "${buildGitHubDownloadURL(ctx, config, release.dmg_filename ?? "", true)}",\n      verified: "github.com/${owner}/${name}/"`;
 	}
 
 	const dmgFilename = release.dmg_filename;
-	const { semver } = release;
 	if (!dmgFilename) {
 		// Should not happen in practice: findMacOSAssets always sets both.
 		return `  url "${release.dmg_url ?? ""}"`;
 	}
-	const escapedSemver = semver.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const urlFilename = dmgFilename.replace(
-		new RegExp(escapedSemver, "g"),
-		"#{version}",
-	);
-	const urlUsesInterpolation = urlFilename !== dmgFilename;
+	const url = buildGitHubDownloadURL(ctx, config, dmgFilename, false);
+	const urlUsesInterpolation = url.includes("#{version}");
 
 	if (urlUsesInterpolation) {
-		return `  url "https://github.com/${owner}/${name}/releases/download/#{version}/${urlFilename}",\n      verified: "github.com/${owner}/${name}/"`;
+		return `  url "${url}",\n      verified: "github.com/${owner}/${name}/"`;
 	}
 
 	return `  url "${release.dmg_url}"`;
@@ -39,16 +60,15 @@ function buildDualArchBlock(
 	isLatest: boolean,
 ): string {
 	const { release } = ctx;
-	const { owner, name } = config.repo;
 	const blocks: string[] = [];
 
 	if (release.arm64) {
 		const url = isLatest
-			? `"https://github.com/${owner}/${name}/releases/download/${release.tag_name}/${release.arm64.filename}"`
-			: `"https://github.com/${owner}/${name}/releases/download/v#{version}/${release.arm64.filename.replaceAll(release.semver, "#{version}")}"`;
+			? buildGitHubDownloadURL(ctx, config, release.arm64.filename, true)
+			: buildGitHubDownloadURL(ctx, config, release.arm64.filename, false);
 
 		let block = "  on_arm do\n";
-		block += `    url ${url}\n`;
+		block += `    url "${url}"\n`;
 		if (!isLatest && release.arm64.sha256) {
 			block += `    sha256 "${release.arm64.sha256}"\n`;
 		}
@@ -58,11 +78,11 @@ function buildDualArchBlock(
 
 	if (release.x64) {
 		const url = isLatest
-			? `"https://github.com/${owner}/${name}/releases/download/${release.tag_name}/${release.x64.filename}"`
-			: `"https://github.com/${owner}/${name}/releases/download/v#{version}/${release.x64.filename.replaceAll(release.semver, "#{version}")}"`;
+			? buildGitHubDownloadURL(ctx, config, release.x64.filename, true)
+			: buildGitHubDownloadURL(ctx, config, release.x64.filename, false);
 
 		let block = "  on_intel do\n";
-		block += `    url ${url}\n`;
+		block += `    url "${url}"\n`;
 		if (!isLatest && release.x64.sha256) {
 			block += `    sha256 "${release.x64.sha256}"\n`;
 		}
@@ -118,8 +138,8 @@ function buildLatest(ctx: CaskContext, config: AppConfig): string {
 	const { appName, bundleId } = metadata;
 
 	let caskName = config.caskName;
-	if (ctx.channel === "alpha") {
-		caskName = `${config.caskName}@alpha`;
+	if (ctx.channel === "preRelease") {
+		caskName = `${config.caskName}@pre-release`;
 	}
 
 	let urlBlock: string;
