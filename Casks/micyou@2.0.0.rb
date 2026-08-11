@@ -1,9 +1,9 @@
-cask "micyou" do
-  version :latest
-  sha256 :no_check
+cask "micyou@2.0.0" do
+  version "2.0.0"
 
   on_arm do
-    url "https://github.com/LanRhyme/MicYou/releases/download/v2.0.0/MicYou-macOS-2.0.0-arm64.dmg"
+    url "https://github.com/LanRhyme/MicYou/releases/download/v#{version}/MicYou-macOS-#{version}-arm64.dmg"
+    sha256 "531a1ae9a013033f7e47fad01dc068575429249d4e66ac720d0fe8656f05078c"
   end
 
   name "MicYou"
