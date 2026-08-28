@@ -1,8 +1,8 @@
-cask "kazumi" do
-  version :latest
-  sha256 :no_check
+cask "kazumi@2.3.0" do
+  version "2.3.0"
+  sha256 "0169572ebb19c47702059382739b331d12d5bf7bb514b9dde4455adec7d5b88c"
 
-  url "https://github.com/Predidit/Kazumi/releases/download/2.3.0/Kazumi_macos_2.3.0.dmg",
+  url "https://github.com/Predidit/Kazumi/releases/download/#{version}/Kazumi_macos_#{version}.dmg",
       verified: "github.com/Predidit/Kazumi/"
   name "Kazumi"
   desc "基于自定义规则的番剧采集与在线观看程序"
