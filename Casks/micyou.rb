@@ -3,7 +3,7 @@ cask "micyou" do
   sha256 :no_check
 
   on_arm do
-    url "https://github.com/LanRhyme/MicYou/releases/download/v2.1.0/MicYou-macOS-2.1.0-arm64.dmg"
+    url "https://github.com/LanRhyme/MicYou/releases/download/v2.1.1/MicYou-macOS-2.1.1-arm64.dmg"
   end
 
   name "MicYou"
